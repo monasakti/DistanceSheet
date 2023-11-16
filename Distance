@@ -1,0 +1,73 @@
+import time
+from time import sleep
+import urequests
+import machine
+
+
+
+def connect():
+    import network
+ 
+    ssid = "WiFi" 
+    password = "WiFi PW"  
+ 
+    station = network.WLAN(network.STA_IF)
+ 
+    if station.isconnected() == True:
+        print("Already connected")
+        return
+ 
+    station.active(True)
+    station.connect(ssid, password)
+ 
+    while station.isconnected() == False:
+        pass
+ 
+    print("Connection successful")
+    print(station.ifconfig())
+    
+connect()
+
+# Distance
+trigger_pin = machine.Pin(7, machine.Pin.OUT)
+echo_pin = machine.Pin(6, machine.Pin.IN)
+
+def get_distance():
+    # Triggering the ultrasonic sensor
+    trigger_pin.off()
+    time.sleep_us(2)
+    trigger_pin.on()
+    time.sleep_us(10)
+    trigger_pin.off()
+    
+    # Measuring the time for the echo
+    while echo_pin.value() == 0:
+        pulse_time = time.ticks_us()
+    
+    while echo_pin.value() == 1:
+        end_time = time.ticks_us()
+    
+    # Calculating distance in centimeters
+    pulse_duration = end_time - pulse_time
+    distance_cm = (pulse_duration * 0.0343) / 2
+    
+    return distance_cm
+
+try:
+    while True:
+        distance = get_distance()
+        print("Distance:", distance, "cm")
+        h = {'content-type' : 'application/x-www-form-urlencoded'}
+        form_url = 'https://docs.google.com/forms/d/e/1FAIpQLScoLS6ba0MUht0AJCvIN1XhhK8mcioLayvdQX-BAjtm0tqTow/formResponse?usp=pp_url&'
+        form_data = 'entry.2000053708=' + str(distance)
+        r = urequests.post(form_url, data=form_data, headers=h)
+        r.status_code
+        r.close()
+        print("check google form")
+except KeyboardInterrupt:
+    print("Measurement stopped by user")
+
+
+
+
+    # https://docs.google.com/forms/d/e/1FAIpQLScoLS6ba0MUht0AJCvIN1XhhK8mcioLayvdQX-BAjtm0tqTow/formResponse?usp=pp_url&entry.2000053708={}&submit=Submit
